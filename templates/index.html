@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Scanner{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4">Scanner de Vulnerabilidades (Nmap)</h1>
+
+  <!-- Formulário -->
+  <form method="post" class="card p-3 shadow-sm mb-4">
+    <div class="mb-3">
+      <label for="target" class="form-label">Digite um IP ou domínio</label>
+      <input type="text" class="form-control" id="target" name="target" required placeholder="Ex: 192.168.1.1">
+    </div>
+    <button type="submit" class="btn btn-primary">Iniciar Scan</button>
+  </form>
+
+  <!-- Mensagem de erro -->
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
+  <!-- Resultados -->
+  {% if results %}
+    <h2 class="mb-3">Resultados</h2>
+
+    {% for host in results %}
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-secondary text-white">
+          Host: {{ host.host }} ({{ host.hostname or "—" }}) - Estado: {{ host.state }}
+        </div>
+        <div class="card-body">
+          {% for proto in host.protocols %}
+            <h5>Protocolo: {{ proto.protocol }}</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Porta</th>
+                    <th>Estado</th>
+                    <th>Serviço</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for port in proto.ports %}
+                  <tr>
+                    <td>{{ port.port }}</td>
+                    <td>{{ port.state }}</td>
+                    <td>{{ port.service }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+
+    <!-- Botão para gerar PDF -->
+    <form method="post" action="{{ url_for('gerar_pdf') }}">
+      <input type="hidden" name="host" value="{{ results[0].host }}">
+      <textarea name="results" hidden>{{ results|tojson|safe }}</textarea>
+      <button type="submit" class="btn btn-success">📄 Gerar PDF</button>
+    </form>
+  {% endif %}
+{% endblock %}
